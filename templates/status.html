@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Character Status</title>
+</head>
+<body>
+    <h1>Character Status</h1>
+    <p><strong>Name:</strong> {{ character.name }}</p>
+    <p><strong>Health:</strong> {{ character.health }}</p>
+    <p><strong>Experience:</strong> {{ character.experience }}</p>
+    <p><strong>Inventory:</strong> {{ character.inventory | join(', ') }}</p>
+    <p>{{ message }}</p>
+    <a href="{{ url_for('travel') }}">Travel</a>
+    <a href="{{ url_for('index') }}">Restart</a>
+</body>
+</html>
+
