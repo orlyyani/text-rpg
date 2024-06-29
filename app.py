@@ -1,6 +1,8 @@
 import os
+import random
 from flask import Flask, render_template, request, redirect, url_for, session
 from game import Character, create_event
+from game.events import BattleEvent
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -27,6 +29,9 @@ def travel():
     event = create_event()
     event.apply(character)
     
+    if isinstance(event, BattleEvent):
+        return redirect(url_for('battle'))
+
     session['character'] = character.__dict__
     return redirect(url_for('status'))
 
@@ -37,13 +42,37 @@ def battle():
     character.update_from_dict(character_data)
 
     if request.method == 'POST':
-        item = request.form['item']
-        message = character.use_item(item)
-        session['character'] = character.__dict__
+        action = request.form['action']
+        if action == 'attack':
+            message = character.attack()
+        elif action == 'defend':
+            message = character.defend()
+        elif action.startswith('use '):
+            item = action.split(' ', 1)[1]
+            message = character.use_item(item)
         session['message'] = message
-        return redirect(url_for('status'))
 
-    return render_template('battle.html', character=character)
+        if session['enemy_health'] <= 0:
+            exp_gain = random.randint(5, 20)
+            character.gain_experience(exp_gain)
+            session['message'] += f' {character.name} won the battle and gained {exp_gain} experience!'
+            session.pop('enemy_health', None)
+            session['character'] = character.__dict__
+            return redirect(url_for('status'))
+
+        # Enemy attacks
+        enemy_damage = random.randint(5, 15)
+        character.lose_health(enemy_damage)
+        session['message'] += f' The enemy attacks {character.name} for {enemy_damage} damage!'
+
+        if character.health <= 0:
+            session['message'] += ' You have been defeated in battle!'
+            session['character'] = character.__dict__
+            return redirect(url_for('status'))
+
+        session['character'] = character.__dict__
+
+    return render_template('battle.html', character=character, enemy_health=session.get('enemy_health'))
 
 @app.route('/status')
 def status():

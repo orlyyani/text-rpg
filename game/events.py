@@ -14,15 +14,9 @@ class FindItemEvent(Event):
 
 class BattleEvent(Event):
     def apply(self, character):
-        outcome = random.choice(['win', 'lose'])
-        if outcome == 'win':
-            exp_gain = random.randint(5, 20)
-            character.gain_experience(exp_gain)
-            session['message'] = f'{character.name} won the battle and gained {exp_gain} experience!'
-        else:
-            health_loss = random.randint(5, 20)
-            character.lose_health(health_loss)
-            session['message'] = f'{character.name} lost the battle and lost {health_loss} health!'
+        # Initialize battle state
+        session['enemy_health'] = 100
+        session['message'] = f'{character.name} encountered an enemy! Prepare for battle.'
 
 class NothingHappensEvent(Event):
     def apply(self, character):

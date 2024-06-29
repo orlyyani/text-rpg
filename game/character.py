@@ -1,3 +1,6 @@
+import random
+from flask import session
+
 class Character:
     def __init__(self, name):
         self.name = name
@@ -36,3 +39,12 @@ class Character:
             self.inventory.remove(item)
             return f"{self.name} used a {item}!"
         return f"{item} not found in inventory!"
+
+    def attack(self):
+        damage = random.randint(10, 20)
+        session['enemy_health'] -= damage
+        return f"{self.name} attacks the enemy for {damage} damage!"
+
+    def defend(self):
+        self.health = min(self.health + 10, 100)
+        return f"{self.name} defends and gains 10 health!"
