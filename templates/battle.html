@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle</title>
+</head>
+<body>
+    <h1>Battle</h1>
+    <p>Choose an item to use:</p>
+    <form method="post">
+        <select name="item">
+            {% for item in character.inventory %}
+                <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Use Item</button>
+    </form>
+    <a href="{{ url_for('status') }}">Back to Status</a>
+</body>
+</html>
