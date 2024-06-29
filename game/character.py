@@ -1,5 +1,8 @@
 import random
 from flask import session
+from game.items.sword import Sword
+from game.items.shield import Shield
+from game.items.item import Item
 
 class Character:
     def __init__(self, name):
@@ -16,7 +19,11 @@ class Character:
         self.health = data.get('health', self.health)
         self.experience = data.get('experience', self.experience)
         self.level = data.get('level', self.level)
-        self.inventory = data.get('inventory', self.inventory)
+        self.inventory = [self.deserialize_item(item) for item in data.get('inventory', [])]
+        self.defending = data.get('defending', self.defending)
+        sword_data = data.get('sword')
+        if sword_data:
+            self.sword = self.deserialize_item(sword_data)
 
     def gain_experience(self, amount):
         self.experience += amount
@@ -37,27 +44,20 @@ class Character:
     def add_item(self, item):
         self.inventory.append(item)
 
-    def use_item(self, item):
-        if item in self.inventory:
-            if item == 'potion':
-                self.health = min(self.health + 30, 100)
-            elif item == 'shield':
-                self.defending = True
-            elif item.startswith('sword'):
-                self.sword = item
-            self.inventory.remove(item)
-            return f"{self.name} used a {item}!"
-        return f"{item} not found in inventory!"
+    def use_item(self, item_name):
+        for item in self.inventory:
+            if item.name == item_name:
+                message = item.use(self)
+                self.inventory.remove(item)
+                return message
+        return f"{item_name} not found in inventory!"
 
     def attack(self):
         if self.sword:
-            damage = self.get_sword_damage()
+            damage = self.sword.get_damage()
             session['enemy_health'] -= damage
-            self.sword_durability -= 1  # Decrease sword durability
-            if self.sword_durability <= 0:
-                self.inventory.remove(self.sword)  # Remove sword from inventory if durability reaches 0
-                self.sword = None
-            return f"{self.name} attacks the enemy with {self.sword} for {damage} damage!"
+            durability_message = self.sword.decrease_durability(self)
+            return f"{self.name} attacks the enemy with {self.sword.name} for {damage} damage! {durability_message}"
         else:
             damage = random.randint(10, 20)
             session['enemy_health'] -= damage
@@ -67,21 +67,23 @@ class Character:
         self.health = min(self.health + 10, 100)
         return f"{self.name} defends and gains 10 health!"
 
-    def get_sword_damage(self):
-        if self.sword == 'sword_of_light':
-            return random.randint(15, 25)
-        elif self.sword == 'sword_of_fire':
-            return random.randint(20, 30)
-        elif self.sword == 'sword_of_ice':
-            return random.randint(25, 35)
-        else:
-            return random.randint(10, 20)
+    def serialize(self):
+        return {
+            'name': self.name,
+            'health': self.health,
+            'experience': self.experience,
+            'level': self.level,
+            'inventory': [item.serialize() for item in self.inventory],
+            'defending': self.defending,
+            'sword': self.sword.serialize() if self.sword else None
+        }
 
-    def add_sword(self, sword):
-        self.inventory.append(sword)
-        if sword == 'sword_of_light':
-            self.sword_durability = 10
-        elif sword == 'sword_of_fire':
-            self.sword_durability = 8
-        elif sword == 'sword_of_ice':
-            self.sword_durability = 6
+    @staticmethod
+    def deserialize_item(item_data):
+        item_type = item_data['type']
+        if item_type == 'Sword':
+            return Sword(item_data['name'], tuple(item_data['damage_range']), item_data['durability'])
+        elif item_type == 'Shield':
+            return Shield(item_data['name'])
+        else:
+            return Item(item_data['name'])

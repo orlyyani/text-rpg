@@ -1,8 +1,9 @@
 import os
 import random
 from flask import Flask, render_template, request, redirect, url_for, session
-from game import Character, create_event
-from game.events import BattleEvent, RestEvent
+from game.character import Character
+from game.events import create_event, BattleEvent, RestEvent
+from controllers.game_controller import game_bp
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -11,12 +12,15 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Required for session management
 
+# Register the game blueprint
+app.register_blueprint(game_bp, url_prefix='/game')
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         name = request.form['name']
         character = Character(name)
-        session['character'] = character.__dict__
+        session['character'] = character.serialize()
         return redirect(url_for('status'))
     return render_template('index.html')
 
@@ -34,7 +38,7 @@ def travel():
         return redirect(url_for('battle'))
     elif isinstance(event, RestEvent):
         return redirect(url_for('status'))  # Go back to status page after resting
-    session['character'] = character.__dict__
+    session['character'] = character.serialize()
     return redirect(url_for('status'))
 
 @app.route('/battle', methods=['GET', 'POST'])
@@ -52,8 +56,6 @@ def battle():
         elif action.startswith('use '):
             item = action.split(' ', 1)[1]
             message = character.use_item(item)
-            if item == 'gold':
-                character.inventory.remove(item)  # Remove gold item from inventory
         session['message'] = message
 
         if session['enemy_health'] <= 0:
@@ -61,7 +63,7 @@ def battle():
             character.gain_experience(exp_gain)
             session['message'] += f' {character.name} won the battle and gained {exp_gain} experience!'
             session.pop('enemy_health', None)
-            session['character'] = character.__dict__
+            session['character'] = character.serialize()
             return redirect(url_for('status'))
 
         # Enemy attacks
@@ -71,10 +73,10 @@ def battle():
 
         if character.health <= 0:
             session['message'] += ' You have been defeated in battle!'
-            session['character'] = character.__dict__
+            session['character'] = character.serialize()
             return redirect(url_for('status'))
 
-        session['character'] = character.__dict__
+        session['character'] = character.serialize()
 
     return render_template('battle.html', character=character, enemy_health=session.get('enemy_health'))
 
@@ -95,7 +97,7 @@ def rest():
     event = RestEvent()
     event.apply(character)
     
-    session['character'] = character.__dict__
+    session['character'] = character.serialize()
     return redirect(url_for('status'))
 
 if __name__ == '__main__':

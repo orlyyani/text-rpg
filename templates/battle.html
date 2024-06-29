@@ -16,7 +16,13 @@
         <select name="action">
             <option value="" disabled selected>Use Item</option>
             {% for item in character.inventory %}
-                <option value="use {{ item }}">{{ item }}</option>
+                {% if item['type'] == 'Sword' %}
+                    <option value="use {{ item['name'] }}">Use Sword: {{ item['name'] }}</option>
+                {% elif item['type'] == 'Shield' %}
+                    <option value="use {{ item['name'] }}">Use Shield: {{ item['name'] }}</option>
+                {% else %}
+                    <option value="use {{ item['name'] }}">Use {{ item['name'] }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <button type="submit">Use Item</button>
