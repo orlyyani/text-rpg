@@ -2,7 +2,7 @@ import os
 import random
 from flask import Flask, render_template, request, redirect, url_for, session
 from game import Character, create_event
-from game.events import BattleEvent
+from game.events import BattleEvent, RestEvent
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -30,8 +30,10 @@ def travel():
     event.apply(character)
     
     if isinstance(event, BattleEvent):
+        session['enemy_health'] = 100  # Initialize enemy health
         return redirect(url_for('battle'))
-
+    elif isinstance(event, RestEvent):
+        return redirect(url_for('status'))  # Go back to status page after resting
     session['character'] = character.__dict__
     return redirect(url_for('status'))
 
@@ -50,6 +52,8 @@ def battle():
         elif action.startswith('use '):
             item = action.split(' ', 1)[1]
             message = character.use_item(item)
+            if item == 'gold':
+                character.inventory.remove(item)  # Remove gold item from inventory
         session['message'] = message
 
         if session['enemy_health'] <= 0:
@@ -81,6 +85,18 @@ def status():
     character.update_from_dict(character_data)
     message = session.pop('message', '')
     return render_template('status.html', character=character, message=message)
+
+@app.route('/rest')
+def rest():
+    character_data = session.get('character', {})
+    character = Character(character_data.get('name', ''))
+    character.update_from_dict(character_data)
+    
+    event = RestEvent()
+    event.apply(character)
+    
+    session['character'] = character.__dict__
+    return redirect(url_for('status'))
 
 if __name__ == '__main__':
     app.run(debug=True)
