@@ -14,12 +14,10 @@ class Sword(Item):
         character.sword = self
         return f"{character.name} equipped {self.name}!"
 
-    def decrease_durability(self, character):
+    def decrease_durability(self):
         self.durability -= 1
         if self.durability <= 0:
-            character.inventory.remove(self)
-            character.sword = None
-            return f"{self.name} broke and was removed from the inventory!"
+            return f"{self.name} broke!"
         return f"{self.name} durability decreased to {self.durability}."
 
     def serialize(self):

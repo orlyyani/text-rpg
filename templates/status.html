@@ -10,18 +10,11 @@
     <p><strong>Health:</strong> {{ character.health }}</p>
     <p><strong>Experience:</strong> {{ character.experience }}</p>
     <p><strong>Level:</strong> {{ character.level }}</p>
+    <p><strong>Gold:</strong> {{ character.gold.amount }}</p>
     <p><strong>Inventory:</strong>
         <ul>
-            {% for item in character.inventory %}
-                <li>
-                    {% if item['type'] == 'Sword' %}
-                        Sword: {{ item['name'] }} (Damage: {{ item['damage_range'][0] }}-{{ item['damage_range'][1] }}, Durability: {{ item['durability'] }})
-                    {% elif item['type'] == 'Shield' %}
-                        Shield: {{ item['name'] }}
-                    {% else %}
-                        {{ item['name'] }}
-                    {% endif %}
-                </li>
+            {% for item_name, count in character.inventory_counts.items() %}
+                <li>{{ item_name }} ({{ count }})</li>
             {% endfor %}
         </ul>
     </p>

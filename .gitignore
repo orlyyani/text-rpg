@@ -1,2 +1,4 @@
 .env
 game/__pycache__
+game/items/__pycache__
+game/resources/__pycache__

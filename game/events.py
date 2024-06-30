@@ -14,13 +14,18 @@ class FindItemEvent(Event):
             Sword('sword_of_light', (15, 25), 10),
             Sword('sword_of_fire', (20, 30), 8),
             Sword('sword_of_ice', (25, 35), 6),
-            Shield('shield'),
+            Shield('shield', 9),
             Item('potion'),
-            Item('gold')
         ]
-        item = random.choice(items)
-        character.add_item(item)
-        session['message'] = f'{character.name} found a {item.name}!'
+        item_or_gold = random.choice(items + ['gold'])  # Add 'gold' as an option
+        if item_or_gold == 'gold':
+            gold_amount = random.randint(1, 10)  # Random gold amount
+            character.gold.add_gold(gold_amount)
+            session['character'] = character.serialize()
+            session['message'] = f'{character.name} found {gold_amount} gold!'
+        else:
+            character.add_item(item_or_gold)
+            session['message'] = f'{character.name} found a {item_or_gold.name}!'
 
 class BattleEvent(Event):
     def apply(self, character):

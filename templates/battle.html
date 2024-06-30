@@ -3,26 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>Battle</title>
+    <style>
+        .character-message {
+            color: blue;
+        }
+        .enemy-message {
+            color: red;
+        }
+    </style>
 </head>
 <body>
     <h1>Battle</h1>
     <p><strong>{{ character.name }}'s Health:</strong> {{ character.health }}</p>
     <p><strong>Enemy Health:</strong> {{ enemy_health }}</p>
+    <p><strong>{{ character.name }}'s Equipped Items:</strong></p>
+    <ul>
+        <li><strong>Sword:</strong> {{ character.equipped_items['sword'].name if character.equipped_items['sword'] else "None" }}</li>
+        <li><strong>Shield:</strong> {{ character.equipped_items['shield'].name if character.equipped_items['shield'] else "None" }}</li>
+    </ul>
     <hr>
-    <p>{{ message }}</p>
+    <ul>
+        {% for event in battle_log %}
+            {% if event.startswith(character.name) %}
+                <li><span class="character-message">{{ event }}</span></li>
+            {% else %}
+                <li><span class="enemy-message">{{ event }}</span></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
     <form method="post">
         <button type="submit" name="action" value="attack">Attack</button>
         <button type="submit" name="action" value="defend">Defend</button>
         <select name="action">
             <option value="" disabled selected>Use Item</option>
-            {% for item in character.inventory %}
-                {% if item['type'] == 'Sword' %}
-                    <option value="use {{ item['name'] }}">Use Sword: {{ item['name'] }}</option>
-                {% elif item['type'] == 'Shield' %}
-                    <option value="use {{ item['name'] }}">Use Shield: {{ item['name'] }}</option>
-                {% else %}
-                    <option value="use {{ item['name'] }}">Use {{ item['name'] }}</option>
-                {% endif %}
+            {% for item_name, count in character.inventory_counts.items() %}
+                <option value="use {{ item_name }}">{{ item_name }} ({{ count }})</option>
             {% endfor %}
         </select>
         <button type="submit">Use Item</button>

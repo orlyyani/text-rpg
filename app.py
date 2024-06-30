@@ -47,6 +47,9 @@ def battle():
     character = Character(character_data.get('name', ''))
     character.update_from_dict(character_data)
 
+    if 'battle_log' not in session:
+        session['battle_log'] = ['Prepare for battle!']
+
     if request.method == 'POST':
         action = request.form['action']
         if action == 'attack':
@@ -56,29 +59,31 @@ def battle():
         elif action.startswith('use '):
             item = action.split(' ', 1)[1]
             message = character.use_item(item)
-        session['message'] = message
+        session['battle_log'].append(f'{character.name} {message}')
 
         if session['enemy_health'] <= 0:
             exp_gain = random.randint(5, 20)
             character.gain_experience(exp_gain)
-            session['message'] += f' {character.name} won the battle and gained {exp_gain} experience!'
+            session['battle_log'].append(f'{character.name} won the battle and gained {exp_gain} experience!')
+            session['message'] = f'{character.name} won the battle and gained {exp_gain} experience!'
             session.pop('enemy_health', None)
             session['character'] = character.serialize()
+            session['battle_log'] = []
             return redirect(url_for('status'))
 
         # Enemy attacks
         enemy_damage = random.randint(5, 15)
         character.lose_health(enemy_damage)
-        session['message'] += f' The enemy attacks {character.name} for {enemy_damage} damage!'
+        session['battle_log'].append(f'The enemy attacks {character.name} for {enemy_damage} damage!')
 
         if character.health <= 0:
-            session['message'] += ' You have been defeated in battle!'
+            session['battle_log'].append('You have been defeated in battle!')
             session['character'] = character.serialize()
             return redirect(url_for('status'))
 
         session['character'] = character.serialize()
 
-    return render_template('battle.html', character=character, enemy_health=session.get('enemy_health'))
+    return render_template('battle.html', character=character, enemy_health=session.get('enemy_health'), battle_log=session['battle_log'])
 
 @app.route('/status')
 def status():
